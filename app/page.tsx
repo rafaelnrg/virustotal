@@ -186,14 +186,14 @@ export default function HomePage() {
         </p>
       </section>
 
-      {error && (
+      {!!error && (
         <section className="card card-error">
           <h2>Erro</h2>
           <p>{error}</p>
         </section>
       )}
 
-      {result && (
+      {!!result && (
         <section className="card card-result">
           <header className="card-header">
             <h2>Resposta do VirusTotal</h2>
@@ -212,4 +212,3 @@ export default function HomePage() {
     </main>
   );
 }
-
