@@ -7,7 +7,7 @@ function getApiKey(): string {
   const key = process.env.VIRUSTOTAL_API_KEY;
   if (!key) {
     throw new Error(
-      "A variável de ambiente VIRUSTOTAL_API_KEY não está configurada."
+      "A variA�vel de ambiente da API de consulta nA�o estA� configurada."
     );
   }
   return key;
@@ -36,7 +36,7 @@ async function vtFetch(path: string, options: RequestInit = {}, apiKey?: string)
   if (!response.ok) {
     const message =
       (data as { error?: { message?: string } })?.error?.message ??
-      `Erro ${response.status} ao chamar o VirusTotal.`;
+      `Erro ${response.status} ao chamar a API de consulta.`;
     throw new Error(message);
   }
 
@@ -55,7 +55,7 @@ function normalizeUrlForId(rawUrl: string): string {
     }
     return parsed.toString();
   } catch {
-    // Se não for uma URL válida, usa o valor original mesmo.
+    // Se nA�o for uma URL vA�lida, usa o valor original mesmo.
     return trimmed;
   }
 }
@@ -69,16 +69,16 @@ function encodeUrlId(rawUrl: string): string {
 async function handleUrlLookup(url: string) {
   const apiKey = getApiKey();
 
-  // 1) Tenta buscar diretamente o objeto de URL (mais rápido para URLs já conhecidas).
+  // 1) Tenta buscar diretamente o objeto de URL (mais rA�pido para URLs jA� conhecidas).
   const urlId = encodeUrlId(url);
   try {
     const urlObject = await vtFetch(`/urls/${urlId}`, {}, apiKey);
     return urlObject;
   } catch {
-    // Se não existir ainda no VT, seguimos para o fluxo de submissão/analysis.
+    // Se nA�o existir ainda no VT, seguimos para o fluxo de submissA�o/analysis.
   }
 
-  // 2) Envia a URL para análise
+  // 2) Envia a URL para anA�lise
   const encodedForm = new URLSearchParams({ url });
   const submission = await vtFetch(
     "/urls",
@@ -94,10 +94,10 @@ async function handleUrlLookup(url: string) {
 
   const analysisId = (submission as { data?: { id?: string } }).data?.id;
   if (!analysisId) {
-    throw new Error("Resposta inesperada do VirusTotal ao enviar a URL.");
+    throw new Error("Resposta inesperada da API de consulta ao enviar a URL.");
   }
 
-  // 3) Faz algumas tentativas de polling; se não completar, retorna o último estado mesmo assim.
+  // 3) Faz algumas tentativas de polling; se nA�o completar, retorna o A�ltimo estado mesmo assim.
   let attempts = 0;
   const maxAttempts = 6;
   const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -142,7 +142,7 @@ export async function GET(request: Request) {
   const value = searchParams.get("value");
 
   if (!type || !value) {
-    return jsonError('Parâmetros "type" e "value" são obrigatórios.');
+    return jsonError('ParA�metros "type" e "value" sA�o obrigatA3rios.');
   }
 
   try {
@@ -158,7 +158,7 @@ export async function GET(request: Request) {
       data = await handleIpLookup(value);
     } else {
       return jsonError(
-        'Tipo inválido. Use "url", "hash", "domain" ou "ip".',
+        'Tipo invA�lido. Use "url", "hash", "domain" ou "ip".',
         400
       );
     }
@@ -171,7 +171,7 @@ export async function GET(request: Request) {
     const message =
       error instanceof Error
         ? error.message
-        : "Erro desconhecido ao consultar o VirusTotal.";
+        : "Erro desconhecido ao consultar a API de consulta.";
     return jsonError(message, 500);
   }
 }
@@ -191,7 +191,7 @@ export async function POST(request: Request) {
     const file = formData.get("file");
 
     if (!(file instanceof File)) {
-      return jsonError('Campo "file" é obrigatório e deve ser um arquivo.');
+      return jsonError('Campo "file" Ac obrigatA3rio e deve ser um arquivo.');
     }
 
     const vtForm = new FormData();
@@ -210,7 +210,7 @@ export async function POST(request: Request) {
     if (!response.ok) {
       const message =
         (data as { error?: { message?: string } })?.error?.message ??
-        `Erro ${response.status} ao enviar arquivo para o VirusTotal.`;
+        `Erro ${response.status} ao enviar arquivo para a API de consulta.`;
       return jsonError(message, 500);
     }
 
@@ -222,7 +222,8 @@ export async function POST(request: Request) {
     const message =
       error instanceof Error
         ? error.message
-        : "Erro desconhecido ao enviar arquivo para o VirusTotal.";
+        : "Erro desconhecido ao enviar arquivo para a API de consulta.";
     return jsonError(message, 500);
   }
 }
+

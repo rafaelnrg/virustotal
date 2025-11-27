@@ -135,6 +135,11 @@ body {
   background: rgba(127, 29, 29, 0.9);
 }
 
+.card-warning {
+  border-color: rgba(251, 146, 60, 0.9);
+  background: rgba(161, 98, 7, 0.16);
+}
+
 .card-result {
   border-color: rgba(45, 212, 191, 0.6);
 }

@@ -367,7 +367,7 @@ export default function HomePage() {
           const message =
             "error" in (data as ApiError)
               ? (data as ApiError).error
-              : "Erro ao consultar o VirusTotal.";
+              : "Erro ao consultar a API de consulta.";
           setError(message);
           return;
         }
@@ -396,7 +396,7 @@ export default function HomePage() {
         const message =
           "error" in (data as ApiError)
             ? (data as ApiError).error
-            : "Erro ao consultar o VirusTotal.";
+            : "Erro ao consultar a API de consulta.";
         setError(message);
         return;
       }
@@ -661,9 +661,23 @@ export default function HomePage() {
       </section>
 
       {!!error && (
-        <section className="card card-error">
-          <h2>Erro</h2>
-          <p>{error}</p>
+        <section
+          className={`card ${
+            error.toLowerCase().includes("not found")
+              ? "card-warning"
+              : "card-error"
+          }`}
+        >
+          <h2>
+            {error.toLowerCase().includes("not found")
+              ? "Nenhum resultado encontrado"
+              : "Erro"}
+          </h2>
+          <p>
+            {error.toLowerCase().includes("not found")
+              ? "Atualmente, não temos nenhum comentário que corresponda à sua pesquisa. Nenhum comentário foi encontrado para a sua consulta. Você pode tentar refinar seus termos de pesquisa ou verificar a sintaxe."
+              : error}
+          </p>
         </section>
       )}
 
