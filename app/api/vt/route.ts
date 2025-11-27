@@ -128,8 +128,23 @@ async function handleHashLookup(hash: string) {
   return vtFetch(`/files/${encodeURIComponent(hash)}`);
 }
 
+function normalizeDomain(rawDomain: string): string {
+  const trimmed = rawDomain.trim();
+
+  if (!trimmed) {
+    return trimmed;
+  }
+
+  // Remove protocolo se o usuário colar algo como "https://exemplo.com/"
+  const withoutProtocol = trimmed.replace(/^https?:\/\//iu, "");
+
+  // Remove barras finais extras: "exemplo.com///" -> "exemplo.com"
+  return withoutProtocol.replace(/\/+$/u, "");
+}
+
 async function handleDomainLookup(domain: string) {
-  return vtFetch(`/domains/${encodeURIComponent(domain)}`);
+  const cleanDomain = normalizeDomain(domain);
+  return vtFetch(`/domains/${encodeURIComponent(cleanDomain)}`);
 }
 
 async function handleIpLookup(ip: string) {
@@ -226,4 +241,3 @@ export async function POST(request: Request) {
     return jsonError(message, 500);
   }
 }
-
