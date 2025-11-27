@@ -16,6 +16,9 @@ type VTResultCardProps = {
 
 function VTResultCard(props: VTResultCardProps) {
   const { mode, result, queryLabel } = props;
+  const [activeTab, setActiveTab] = useState<"detection" | "details" | "community">(
+    "detection"
+  );
 
   const data = result?.data ?? {};
   const attributes = data.attributes ?? {};
@@ -84,9 +87,20 @@ function VTResultCard(props: VTResultCardProps) {
   const mainMessageClass = `vt-main-message ${
     isMalicious ? "vt-main-message-bad" : "vt-main-message-good"
   }`;
+  const cardClass = `card card-result ${
+    totalEngines === 0
+      ? "card-result-unknown"
+      : isMalicious
+      ? "card-result-bad"
+      : "card-result-good"
+  }`;
+
+  const categories = attributes.categories ?? {};
+  const totalVotes = attributes.total_votes ?? {};
+  const reputation = attributes.reputation ?? null;
 
   return (
-    <section className="card card-result">
+    <section className={cardClass}>
       <header className="card-header">
         <h2>Resultado da análise</h2>
       </header>
@@ -139,37 +153,166 @@ function VTResultCard(props: VTResultCardProps) {
       </div>
 
       <div className="vt-tabs">
-        <span className="vt-tab vt-tab-active">Detecção</span>
-        <span className="vt-tab">Detalhes</span>
-        <span className="vt-tab">Comunidade</span>
+        <button
+          type="button"
+          className={`vt-tab ${activeTab === "detection" ? "vt-tab-active" : ""}`}
+          onClick={() => setActiveTab("detection")}
+        >
+          Detecção
+        </button>
+        <button
+          type="button"
+          className={`vt-tab ${activeTab === "details" ? "vt-tab-active" : ""}`}
+          onClick={() => setActiveTab("details")}
+        >
+          Detalhes
+        </button>
+        <button
+          type="button"
+          className={`vt-tab ${activeTab === "community" ? "vt-tab-active" : ""}`}
+          onClick={() => setActiveTab("community")}
+        >
+          Comunidade
+        </button>
       </div>
 
-      <div className="vt-detections">
-        {engines.length === 0 ? (
-          <p className="vt-empty">Nenhum resultado detalhado para exibir.</p>
-        ) : (
-          <table className="vt-table">
-            <thead>
-              <tr>
-                <th>Motor</th>
-                <th>Categoria</th>
-                <th>Resultado</th>
-                <th>Método</th>
-              </tr>
-            </thead>
-            <tbody>
-              {engines.map((engine, index) => (
-                <tr key={`${engine.engine_name ?? "engine"}-${index}`}>
-                  <td>{engine.engine_name ?? "Desconhecido"}</td>
-                  <td>{engine.category ?? "-"}</td>
-                  <td>{engine.result ?? "clean"}</td>
-                  <td>{engine.method ?? "-"}</td>
+      {activeTab === "detection" && (
+        <div className="vt-detections">
+          {engines.length === 0 ? (
+            <p className="vt-empty">Nenhum resultado detalhado para exibir.</p>
+          ) : (
+            <table className="vt-table">
+              <thead>
+                <tr>
+                  <th>Motor</th>
+                  <th>Categoria</th>
+                  <th>Resultado</th>
+                  <th>Método</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+              </thead>
+              <tbody>
+                {engines.map((engine, index) => (
+                  <tr key={`${engine.engine_name ?? "engine"}-${index}`}>
+                    <td>{engine.engine_name ?? "Desconhecido"}</td>
+                    <td>{engine.category ?? "-"}</td>
+                    <td>{engine.result ?? "clean"}</td>
+                    <td>{engine.method ?? "-"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+
+      {activeTab === "details" && (
+        <div className="vt-detections">
+          <div className="vt-details-section">
+            <h3>Categorias</h3>
+            {Object.keys(categories).length === 0 ? (
+              <p className="vt-empty">Nenhuma categoria disponível.</p>
+            ) : (
+              <ul className="vt-list">
+                {Object.entries(categories).map(([vendor, category]) => (
+                  <li key={vendor}>
+                    <strong>{vendor}:</strong> {String(category)}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="vt-details-section">
+            <h3>Histórico</h3>
+            <ul className="vt-list">
+              {typeof attributes.first_submission_date === "number" && (
+                <li>
+                  <strong>Primeira submissão:</strong>{" "}
+                  {new Date(
+                    attributes.first_submission_date * 1000
+                  ).toLocaleString("pt-BR")}
+                </li>
+              )}
+              {typeof attributes.last_submission_date === "number" && (
+                <li>
+                  <strong>Última submissão:</strong>{" "}
+                  {new Date(
+                    attributes.last_submission_date * 1000
+                  ).toLocaleString("pt-BR")}
+                </li>
+              )}
+              {typeof analysisDate === "number" && (
+                <li>
+                  <strong>Última análise:</strong>{" "}
+                  {new Date(analysisDate * 1000).toLocaleString("pt-BR")}
+                </li>
+              )}
+            </ul>
+          </div>
+
+          <div className="vt-details-section">
+            <h3>Resumo técnico</h3>
+            <ul className="vt-list">
+              {mode === "url" && typeof attributes.last_http_response_code === "number" && (
+                <li>
+                  <strong>Status Code:</strong> {attributes.last_http_response_code}
+                </li>
+              )}
+              {mode === "url" &&
+                typeof attributes.last_http_response_content_type === "string" && (
+                  <li>
+                    <strong>Content type:</strong>{" "}
+                    {attributes.last_http_response_content_type}
+                  </li>
+                )}
+              {typeof harmlessCount === "number" && (
+                <li>
+                  <strong>Harmless:</strong> {harmlessCount}
+                </li>
+              )}
+              {typeof undetectedCount === "number" && (
+                <li>
+                  <strong>Undetected:</strong> {undetectedCount}
+                </li>
+              )}
+              {typeof timeoutCount === "number" && (
+                <li>
+                  <strong>Timeout:</strong> {timeoutCount}
+                </li>
+              )}
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "community" && (
+        <div className="vt-detections">
+          <div className="vt-details-section">
+            <h3>Comunidade</h3>
+            <ul className="vt-list">
+              {typeof reputation === "number" && (
+                <li>
+                  <strong>Reputação:</strong> {reputation}
+                </li>
+              )}
+              {typeof totalVotes.harmless === "number" && (
+                <li>
+                  <strong>Votos harmless:</strong> {totalVotes.harmless}
+                </li>
+              )}
+              {typeof totalVotes.malicious === "number" && (
+                <li>
+                  <strong>Votos maliciosos:</strong> {totalVotes.malicious}
+                </li>
+              )}
+            </ul>
+            <p className="vt-empty">
+              Dados detalhados de comentários da comunidade não são expostos pela API
+              pública. Os números acima resumem a percepção de risco.
+            </p>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
@@ -266,14 +409,30 @@ export default function HomePage() {
     }
   }
 
+  function getSubmitLabel(currentMode: Mode) {
+    switch (currentMode) {
+      case "url":
+        return "Analizar URL";
+      case "hash":
+        return "Analisar arquivo";
+      case "domain":
+        return "Analizar dominio";
+      case "ip":
+        return "Analizar IP";
+      case "file":
+      default:
+        return "Analizar Arquivo enviado";
+    }
+  }
+
   return (
     <main className="page">
       <section className="card">
         <header className="card-header">
           <h1>Analises de segurança</h1>
           <p>
-            Consulte URLs, hashes de arquivos, domínios, IPs e envie arquivos
-            para análise usando a API do VirusTotal.
+            Consulte URLs, hashes de arquivos, domínios, IPs e envie arquivos para
+            análise usando a API do VirusTotal.
           </p>
         </header>
 
@@ -357,17 +516,7 @@ export default function HomePage() {
           )}
 
           <button className="button" type="submit" disabled={loading}>
-            {loading
-              ? "Consultando..."
-              : mode === "url"
-              ? "Analizar URL"
-              : mode === "hash"
-              ? "Analisar arquivo"
-              : mode === "domain"
-              ? "Analizar domínio"
-              : mode === "ip"
-              ? "Analizar IP"
-              : "Analizar arquivo enviado"}
+            {loading ? "Consultando..." : getSubmitLabel(mode)}
           </button>
         </form>
       </section>
@@ -389,3 +538,4 @@ export default function HomePage() {
     </main>
   );
 }
+

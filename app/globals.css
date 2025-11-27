@@ -139,6 +139,18 @@ body {
   border-color: rgba(45, 212, 191, 0.6);
 }
 
+.card-result-good {
+  border-color: rgba(45, 212, 191, 0.6);
+}
+
+.card-result-bad {
+  border-color: rgba(248, 113, 113, 0.8);
+}
+
+.card-result-unknown {
+  border-color: rgba(148, 163, 184, 0.6);
+}
+
 .result-section {
   margin-top: 1.25rem;
 }
@@ -277,6 +289,10 @@ body {
 .vt-tab {
   padding-bottom: 0.25rem;
   color: #9ca3af;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding-inline: 0;
 }
 
 .vt-tab-active {
@@ -292,6 +308,22 @@ body {
   margin: 0;
   font-size: 0.85rem;
   color: #9ca3af;
+}
+
+.vt-details-section {
+  margin-top: 0.9rem;
+}
+
+.vt-details-section h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.9rem;
+}
+
+.vt-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.8rem;
+  color: #e5e7eb;
 }
 
 .vt-table {
