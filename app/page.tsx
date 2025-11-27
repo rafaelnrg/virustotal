@@ -515,6 +515,29 @@ export default function HomePage() {
             {loading ? "Consultando..." : getSubmitLabel(mode)}
           </button>
         </form>
+
+        <div
+          style={{
+            marginTop: 24,
+            textAlign: "center"
+          }}
+        >
+          <hr
+            style={{
+              borderColor: "#2f2f38",
+              marginBottom: 12
+            }}
+          />
+          <p
+            style={{
+              margin: 0,
+              fontSize: 12,
+              color: "#ffffff"
+            }}
+          >
+            Powered by Rafael Freitas
+          </p>
+        </div>
       </section>
 
       {!!error && (
@@ -528,10 +551,7 @@ export default function HomePage() {
         <VTResultCard mode={mode} result={result} queryLabel={lastQuery} />
       )}
 
-      <footer className="footer">
-        <p>Powered by Rafael Freitas</p>
-      </footer>
+      <footer className="footer" />
     </main>
   );
 }
-
