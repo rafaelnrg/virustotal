@@ -1,5 +1,3 @@
-import { NextRequest } from "next/server";
-
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -108,7 +106,7 @@ async function handleIpLookup(ip: string) {
   return vtFetch(`/ip_addresses/${encodeURIComponent(ip)}`);
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const type = searchParams.get("type");
   const value = searchParams.get("value");
@@ -198,4 +196,3 @@ export async function POST(request: Request) {
     return jsonError(message, 500);
   }
 }
-
