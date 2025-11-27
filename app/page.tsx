@@ -320,6 +320,11 @@ export default function HomePage() {
   const [result, setResult] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [lastQuery, setLastQuery] = useState<string>("");
+  const [hashFile, setHashFile] = useState<File | null>(null);
+  const [hashValue, setHashValue] = useState("");
+  const [hashError, setHashError] = useState<string | null>(null);
+  const [hashLoading, setHashLoading] = useState(false);
+  const [hashCopied, setHashCopied] = useState(false);
 
   const modeDescription =
     mode === "url"
@@ -404,6 +409,54 @@ export default function HomePage() {
     }
   }
 
+  async function handleExtractHash() {
+    setHashError(null);
+    setHashValue("");
+
+    if (!hashFile) {
+      setHashError("Selecione um arquivo para gerar o hash.");
+      return;
+    }
+
+    if (typeof window === "undefined" || !window.crypto?.subtle) {
+      setHashError(
+        "Seu navegador nA�o oferece suporte para geraAA�o de hash (Web Crypto)."
+      );
+      return;
+    }
+
+    try {
+      setHashLoading(true);
+
+      const buffer = await hashFile.arrayBuffer();
+      const hashBuffer = await window.crypto.subtle.digest("SHA-256", buffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+
+      setHashValue(hashHex);
+    } catch {
+      setHashError("Erro ao gerar o hash do arquivo.");
+    } finally {
+      setHashLoading(false);
+    }
+  }
+
+  async function handleCopyHash() {
+    if (!hashValue) return;
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(hashValue);
+        setHashCopied(true);
+        setTimeout(() => setHashCopied(false), 1500);
+      }
+    } catch {
+      setHashCopied(false);
+    }
+  }
+
   function getSubmitLabel(currentMode: Mode) {
     switch (currentMode) {
       case "url":
@@ -472,6 +525,74 @@ export default function HomePage() {
         <p className="note">{modeDescription}</p>
 
         <form className="form" onSubmit={handleSubmit}>
+          {mode === "hash" && (
+            <section className="hash-extract">
+              <h3 className="hash-extract-title">Descubra o hash do seu arquivo</h3>
+              <p className="hash-extract-subtitle">
+                Analise a segurança através do hash de seu arquivo.
+              </p>
+
+              <label className="label">
+                Arquivo para gerar hash
+                <input
+                  className="input"
+                  type="file"
+                  onChange={(event) =>
+                    setHashFile(
+                      event.target.files ? event.target.files[0] : null
+                    )
+                  }
+                />
+              </label>
+
+              <button
+                type="button"
+                className="button"
+                disabled={hashLoading}
+                onClick={handleExtractHash}
+              >
+                {hashLoading ? "Gerando hash..." : "Extrair hash (SHA-256)"}
+              </button>
+
+              {hashError && (
+                <p className="hash-extract-error">{hashError}</p>
+              )}
+
+              {hashValue && (
+                <div className="hash-extract-result">
+                  <p className="hash-extract-label">Hash SHA-256 do arquivo:</p>
+                  <div className="hash-extract-line">
+                    <pre className="hash-extract-pre">{hashValue}</pre>
+                    <button
+                      type="button"
+                      className="hash-copy-button"
+                      onClick={handleCopyHash}
+                      title="Copiar hash para a área de transferência"
+                    >
+                      <svg
+                        aria-hidden="true"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
+                    </button>
+                    {hashCopied && (
+                      <span className="hash-copy-status">Copiado!</span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
+
           {mode !== "file" ? (
             <label className="label">
               {mode === "url"
