@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import React, { FormEvent, useState } from "react";
 
 type Mode = "url" | "hash" | "domain" | "ip" | "file";
 
@@ -14,27 +14,26 @@ type VTResultCardProps = {
   queryLabel: string;
 };
 
-function VTResultCard(props: VTResultCardProps) {
-  const { mode, result, queryLabel } = props;
+function VTResultCard({ mode, result, queryLabel }: VTResultCardProps) {
   const [activeTab, setActiveTab] =
     useState<"detection" | "details" | "community">("detection");
 
-  const data = result?.data ?? {};
-  const attributes = data.attributes ?? {};
+  const data = (result && result.data) || {};
+  const attributes = (data && data.attributes) || {};
 
   const stats =
-    attributes.last_analysis_stats ??
-    attributes.stats ??
-    attributes.analysis_stats ??
+    attributes.last_analysis_stats ||
+    attributes.stats ||
+    attributes.analysis_stats ||
     {};
 
   const resultsMap =
-    attributes.last_analysis_results ??
-    attributes.results ??
-    attributes.analysis_results ??
+    attributes.last_analysis_results ||
+    attributes.results ||
+    attributes.analysis_results ||
     {};
 
-  const engines = Object.values(resultsMap ?? {}) as Array<{
+  const engines = Object.values(resultsMap as Record<string, any>) as Array<{
     engine_name?: string;
     category?: string;
     result?: string | null;
@@ -42,10 +41,10 @@ function VTResultCard(props: VTResultCardProps) {
   }>;
 
   const maliciousCount =
-    (stats.malicious ?? 0) + (stats.suspicious ?? 0) + (stats.malware ?? 0);
-  const harmlessCount = stats.harmless ?? 0;
-  const undetectedCount = stats.undetected ?? 0;
-  const timeoutCount = stats.timeout ?? 0;
+    (stats.malicious || 0) + (stats.suspicious || 0) + (stats.malware || 0);
+  const harmlessCount = stats.harmless || 0;
+  const undetectedCount = stats.undetected || 0;
+  const timeoutCount = stats.timeout || 0;
 
   const totalEngines =
     engines.length ||
@@ -53,8 +52,8 @@ function VTResultCard(props: VTResultCardProps) {
     0;
 
   const analysisDate =
-    attributes.last_analysis_date ??
-    attributes.date ??
+    attributes.last_analysis_date ||
+    attributes.date ||
     attributes.last_modification_date;
 
   const isMalicious = maliciousCount > 0;
@@ -94,9 +93,9 @@ function VTResultCard(props: VTResultCardProps) {
       : "card-result-good"
   }`;
 
-  const categories = attributes.categories ?? {};
-  const totalVotes = attributes.total_votes ?? {};
-  const reputation = attributes.reputation ?? null;
+  const categories = attributes.categories || {};
+  const totalVotes = attributes.total_votes || {};
+  const reputation = attributes.reputation as number | undefined;
 
   return (
     <section className={cardClass}>
@@ -212,11 +211,13 @@ function VTResultCard(props: VTResultCardProps) {
               <p className="vt-empty">Nenhuma categoria disponível.</p>
             ) : (
               <ul className="vt-list">
-                {Object.entries(categories).map(([vendor, category]) => (
-                  <li key={vendor}>
-                    <strong>{vendor}:</strong> {String(category)}
-                  </li>
-                ))}
+                {Object.entries(categories as Record<string, string>).map(
+                  ([vendor, category]) => (
+                    <li key={vendor}>
+                      <strong>{vendor}:</strong> {category}
+                    </li>
+                  )
+                )}
               </ul>
             )}
           </div>
@@ -293,13 +294,11 @@ function VTResultCard(props: VTResultCardProps) {
               )}
               {typeof totalVotes.harmless === "number" && (
                 <li>
-                  <strong>Votos harmless:</strong> {totalVotes.harmless}</strong>
-                </li>
+                  <strong>Votos harmless:</strong> {totalVotes.harmless}</li>
               )}
               {typeof totalVotes.malicious === "number" && (
                 <li>
-                  <strong>Votos maliciosos:</strong> {totalVotes.malicious}
-                </li>
+                  <strong>Votos maliciosos:</strong> {totalVotes.malicious}</li>
               )}
             </ul>
             <p className="vt-empty">
