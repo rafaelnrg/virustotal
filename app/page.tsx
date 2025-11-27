@@ -1,8 +1,9 @@
 "use client";
 
+import CryptoJS from "crypto-js";
 import React, { FormEvent, useState } from "react";
 
-type Mode = "url" | "hash" | "domain" | "ip" | "file";
+type Mode = "url" | "hash" | "domain" | "ip" | "file" | "extract";
 
 type ApiError = {
   error: string;
@@ -13,6 +14,94 @@ type VTResultCardProps = {
   result: any;
   queryLabel: string;
 };
+
+type HashValues = {
+  md5: string;
+  sha1: string;
+  sha256: string;
+};
+
+function arrayBufferToWordArray(buffer: ArrayBuffer) {
+  const uint8Array = new Uint8Array(buffer);
+  const words = [];
+
+  for (let i = 0; i < uint8Array.length; i += 1) {
+    words[(i / 4) | 0] |= uint8Array[i] << (24 - (i % 4) * 8);
+  }
+
+  return CryptoJS.lib.WordArray.create(words, uint8Array.length);
+}
+
+function HashExtractCard({
+  hashes,
+  filename
+}: {
+  hashes: HashValues;
+  filename: string;
+}) {
+  const [copiedHash, setCopiedHash] = useState<string | null>(null);
+
+  async function handleCopy(value: string) {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedHash(value);
+      setTimeout(() => setCopiedHash(null), 1500);
+    } catch {
+      setCopiedHash(null);
+    }
+  }
+
+  const rows = [
+    { label: "SHA-256", value: hashes.sha256 },
+    { label: "SHA-1", value: hashes.sha1 },
+    { label: "MD5", value: hashes.md5 }
+  ];
+
+  return (
+    <section className="card card-hash-extract">
+      <header className="card-header">
+        <h2>Hashes do arquivo</h2>
+        <p>Arquivo analisado: {filename}</p>
+      </header>
+
+      <div className="hash-results">
+        {rows.map((row) => (
+          <div className="hash-result-line" key={row.label}>
+            <div className="hash-result-text">
+              <span className="hash-algo">{row.label}</span>
+              <span className="hash-value">{row.value}</span>
+            </div>
+            <button
+              type="button"
+              className="copy-button"
+              title="Copiar hash"
+              onClick={() => handleCopy(row.value)}
+            >
+              <svg
+                aria-hidden="true"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+              Copiar
+            </button>
+            {copiedHash === row.value && (
+              <span className="copy-status">Copiado!</span>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 function VTResultCard({ mode, result, queryLabel }: VTResultCardProps) {
   const [activeTab, setActiveTab] =
@@ -318,6 +407,9 @@ export default function HomePage() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any | null>(null);
+  const [extractedHashes, setExtractedHashes] = useState<HashValues | null>(
+    null
+  );
   const [error, setError] = useState<string | null>(null);
   const [lastQuery, setLastQuery] = useState<string>("");
 
@@ -330,7 +422,7 @@ export default function HomePage() {
       ? "Domínio: busca informações de reputação e histórico de segurança relacionadas a um domínio (exemplo.com)."
       : mode === "ip"
       ? "IP: consulta o endereço IP e exibe dados de reputação, atividades suspeitas e associações conhecidas."
-      : "Arquivo (upload): envia o arquivo selecionado para o VirusTotal para ser analisado pelos motores antivírus.";
+      : "Arquivo (upload): envia o arquivo selecionado ser analisado pelos motores antivírus.";
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -554,4 +646,3 @@ export default function HomePage() {
     </main>
   );
 }
-
