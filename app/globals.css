@@ -154,6 +154,14 @@ body {
   border: 1px solid rgba(148, 163, 184, 0.4);
 }
 
+.vt-banner-good {
+  border-color: rgba(34, 197, 94, 0.55);
+}
+
+.vt-banner-bad {
+  border-color: rgba(248, 113, 113, 0.8);
+}
+
 .vt-score {
   display: flex;
   flex-direction: column;
@@ -165,14 +173,22 @@ body {
   width: 70px;
   height: 70px;
   border-radius: 50%;
-  border: 4px solid #22c55e;
+  border: 4px solid currentColor;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #bbf7d0;
+  color: #e5e7eb;
   font-weight: 700;
   font-size: 0.9rem;
+}
+
+.vt-score-circle-good {
+  color: #22c55e;
+}
+
+.vt-score-circle-bad {
+  color: #f97373;
 }
 
 .vt-score-number {
@@ -200,6 +216,14 @@ body {
   font-size: 0.95rem;
   font-weight: 600;
   color: #e5e7eb;
+}
+
+.vt-main-message-good {
+  color: #bbf7d0;
+}
+
+.vt-main-message-bad {
+  color: #fecaca;
 }
 
 .vt-main-target {

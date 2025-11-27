@@ -55,10 +55,12 @@ function VTResultCard(props: VTResultCardProps) {
     attributes.date ??
     attributes.last_modification_date;
 
+  const isMalicious = maliciousCount > 0;
+
   const message =
     totalEngines === 0
       ? "Nenhum dado de detecção disponível."
-      : maliciousCount === 0
+      : !isMalicious
       ? "Nenhum mecanismo de segurança marcou este recurso como malicioso."
       : `${maliciousCount} mecanismo(s) marcaram este recurso como malicioso ou suspeito.`;
 
@@ -73,15 +75,25 @@ function VTResultCard(props: VTResultCardProps) {
       ? "Endereço IP"
       : "Arquivo enviado";
 
+  const bannerClass = `vt-banner ${
+    isMalicious ? "vt-banner-bad" : "vt-banner-good"
+  }`;
+  const scoreCircleClass = `vt-score-circle ${
+    isMalicious ? "vt-score-circle-bad" : "vt-score-circle-good"
+  }`;
+  const mainMessageClass = `vt-main-message ${
+    isMalicious ? "vt-main-message-bad" : "vt-main-message-good"
+  }`;
+
   return (
     <section className="card card-result">
       <header className="card-header">
-        <h2>Resposta do VirusTotal</h2>
+        <h2>Resultado da análise</h2>
       </header>
 
-      <div className="vt-banner">
+      <div className={bannerClass}>
         <div className="vt-score">
-          <div className="vt-score-circle">
+          <div className={scoreCircleClass}>
             <span className="vt-score-number">{maliciousCount}</span>
             <span className="vt-score-total">/ {totalEngines || "?"}</span>
           </div>
@@ -89,7 +101,7 @@ function VTResultCard(props: VTResultCardProps) {
         </div>
 
         <div className="vt-main">
-          <p className="vt-main-message">{message}</p>
+          <p className={mainMessageClass}>{message}</p>
           <p className="vt-main-target">
             <span className="vt-main-target-label">{typeLabel} analisado:</span>
             <span className="vt-main-target-value">{queryLabel}</span>
@@ -258,7 +270,7 @@ export default function HomePage() {
     <main className="page">
       <section className="card">
         <header className="card-header">
-          <h1>Painel VirusTotal</h1>
+          <h1>Analises de segurança</h1>
           <p>
             Consulte URLs, hashes de arquivos, domínios, IPs e envie arquivos
             para análise usando a API do VirusTotal.
@@ -345,7 +357,17 @@ export default function HomePage() {
           )}
 
           <button className="button" type="submit" disabled={loading}>
-            {loading ? "Consultando..." : "Consultar no VirusTotal"}
+            {loading
+              ? "Consultando..."
+              : mode === "url"
+              ? "Analizar URL"
+              : mode === "hash"
+              ? "Analisar arquivo"
+              : mode === "domain"
+              ? "Analizar domínio"
+              : mode === "ip"
+              ? "Analizar IP"
+              : "Analizar arquivo enviado"}
           </button>
         </form>
       </section>
@@ -367,4 +389,3 @@ export default function HomePage() {
     </main>
   );
 }
-

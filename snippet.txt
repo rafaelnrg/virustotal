@@ -1,0 +1,7 @@
+ useState<string>("");
+
+  const modeDescription =
+    mode === "url"
+      ? "URL: envia o endereço informado para o VirusTotal, aguarda a análise e retorna o relatório completo da URL."
+      : mode === "hash"
+      ? "Arquivo (hash): consulta no VirusTota
