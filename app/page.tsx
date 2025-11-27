@@ -23,7 +23,7 @@ type HashValues = {
 
 function arrayBufferToWordArray(buffer: ArrayBuffer) {
   const uint8Array = new Uint8Array(buffer);
-  const words = [];
+  const words: number[] = [];
 
   for (let i = 0; i < uint8Array.length; i += 1) {
     words[(i / 4) | 0] |= uint8Array[i] << (24 - (i % 4) * 8);
