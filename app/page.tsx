@@ -415,7 +415,7 @@ export default function HomePage() {
 
   const modeDescription =
     mode === "url"
-      ? "URL: envia o endereço informado para o VirusTotal, aguarda a análise e retorna o relatório completo da URL."
+      ? "URL: envia o endereço informado para a análise e retorna o relatório completo da URL."
       : mode === "hash"
       ? "Arquivo (hash): consulta no VirusTotal um arquivo já conhecido a partir do seu hash (MD5, SHA1 ou SHA256)."
       : mode === "domain"
