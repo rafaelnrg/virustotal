@@ -16,9 +16,8 @@ type VTResultCardProps = {
 
 function VTResultCard(props: VTResultCardProps) {
   const { mode, result, queryLabel } = props;
-  const [activeTab, setActiveTab] = useState<"detection" | "details" | "community">(
-    "detection"
-  );
+  const [activeTab, setActiveTab] =
+    useState<"detection" | "details" | "community">("detection");
 
   const data = result?.data ?? {};
   const attributes = data.attributes ?? {};
@@ -253,33 +252,30 @@ function VTResultCard(props: VTResultCardProps) {
           <div className="vt-details-section">
             <h3>Resumo técnico</h3>
             <ul className="vt-list">
-              {mode === "url" && typeof attributes.last_http_response_code === "number" && (
-                <li>
-                  <strong>Status Code:</strong> {attributes.last_http_response_code}
-                </li>
-              )}
               {mode === "url" &&
-                typeof attributes.last_http_response_content_type === "string" && (
+                typeof attributes.last_http_response_code === "number" && (
+                  <li>
+                    <strong>Status Code:</strong>{" "}
+                    {attributes.last_http_response_code}
+                  </li>
+                )}
+              {mode === "url" &&
+                typeof attributes.last_http_response_content_type ===
+                  "string" && (
                   <li>
                     <strong>Content type:</strong>{" "}
                     {attributes.last_http_response_content_type}
                   </li>
                 )}
-              {typeof harmlessCount === "number" && (
-                <li>
-                  <strong>Harmless:</strong> {harmlessCount}
-                </li>
-              )}
-              {typeof undetectedCount === "number" && (
-                <li>
-                  <strong>Undetected:</strong> {undetectedCount}
-                </li>
-              )}
-              {typeof timeoutCount === "number" && (
-                <li>
-                  <strong>Timeout:</strong> {timeoutCount}
-                </li>
-              )}
+              <li>
+                <strong>Harmless:</strong> {harmlessCount}
+              </li>
+              <li>
+                <strong>Undetected:</strong> {undetectedCount}
+              </li>
+              <li>
+                <strong>Timeout:</strong> {timeoutCount}
+              </li>
             </ul>
           </div>
         </div>
@@ -297,7 +293,7 @@ function VTResultCard(props: VTResultCardProps) {
               )}
               {typeof totalVotes.harmless === "number" && (
                 <li>
-                  <strong>Votos harmless:</strong> {totalVotes.harmless}
+                  <strong>Votos harmless:</strong> {totalVotes.harmless}</strong>
                 </li>
               )}
               {typeof totalVotes.malicious === "number" && (
@@ -307,7 +303,7 @@ function VTResultCard(props: VTResultCardProps) {
               )}
             </ul>
             <p className="vt-empty">
-              Dados detalhados de comentários da comunidade não são expostos pela API
+              Comentários detalhados da comunidade não são expostos pela API
               pública. Os números acima resumem a percepção de risco.
             </p>
           </div>
@@ -414,14 +410,14 @@ export default function HomePage() {
       case "url":
         return "Analizar URL";
       case "hash":
-        return "Analisar arquivo";
+        return "Analizar hash";
       case "domain":
         return "Analizar dominio";
       case "ip":
         return "Analizar IP";
       case "file":
       default:
-        return "Analizar Arquivo enviado";
+        return "Analizar arquivo recebido";
     }
   }
 
@@ -431,8 +427,8 @@ export default function HomePage() {
         <header className="card-header">
           <h1>Analises de segurança</h1>
           <p>
-            Consulte URLs, hashes de arquivos, domínios, IPs e envie arquivos para
-            análise usando a API do VirusTotal.
+            Consulte URLs, hashes de arquivos, domínios, IPs e envie arquivos
+            para análise
           </p>
         </header>
 
