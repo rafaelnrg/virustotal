@@ -4,19 +4,183 @@ import { FormEvent, useState } from "react";
 
 type Mode = "url" | "hash" | "domain" | "ip" | "file";
 
-type VTResponse = unknown;
-
 type ApiError = {
   error: string;
 };
+
+type VTResultCardProps = {
+  mode: Mode;
+  result: any;
+  queryLabel: string;
+};
+
+function VTResultCard(props: VTResultCardProps) {
+  const { mode, result, queryLabel } = props;
+
+  const data = result?.data ?? {};
+  const attributes = data.attributes ?? {};
+
+  const stats =
+    attributes.last_analysis_stats ??
+    attributes.stats ??
+    attributes.analysis_stats ??
+    {};
+
+  const resultsMap =
+    attributes.last_analysis_results ??
+    attributes.results ??
+    attributes.analysis_results ??
+    {};
+
+  const engines = Object.values(resultsMap ?? {}) as Array<{
+    engine_name?: string;
+    category?: string;
+    result?: string | null;
+    method?: string;
+  }>;
+
+  const maliciousCount =
+    (stats.malicious ?? 0) + (stats.suspicious ?? 0) + (stats.malware ?? 0);
+  const harmlessCount = stats.harmless ?? 0;
+  const undetectedCount = stats.undetected ?? 0;
+  const timeoutCount = stats.timeout ?? 0;
+
+  const totalEngines =
+    engines.length ||
+    maliciousCount + harmlessCount + undetectedCount + timeoutCount ||
+    0;
+
+  const analysisDate =
+    attributes.last_analysis_date ??
+    attributes.date ??
+    attributes.last_modification_date;
+
+  const message =
+    totalEngines === 0
+      ? "Nenhum dado de detecção disponível."
+      : maliciousCount === 0
+      ? "Nenhum mecanismo de segurança marcou este recurso como malicioso."
+      : `${maliciousCount} mecanismo(s) marcaram este recurso como malicioso ou suspeito.`;
+
+  const typeLabel =
+    mode === "url"
+      ? "URL"
+      : mode === "hash"
+      ? "Hash de arquivo"
+      : mode === "domain"
+      ? "Domínio"
+      : mode === "ip"
+      ? "Endereço IP"
+      : "Arquivo enviado";
+
+  return (
+    <section className="card card-result">
+      <header className="card-header">
+        <h2>Resposta do VirusTotal</h2>
+      </header>
+
+      <div className="vt-banner">
+        <div className="vt-score">
+          <div className="vt-score-circle">
+            <span className="vt-score-number">{maliciousCount}</span>
+            <span className="vt-score-total">/ {totalEngines || "?"}</span>
+          </div>
+          <span className="vt-score-label">Detecções</span>
+        </div>
+
+        <div className="vt-main">
+          <p className="vt-main-message">{message}</p>
+          <p className="vt-main-target">
+            <span className="vt-main-target-label">{typeLabel} analisado:</span>
+            <span className="vt-main-target-value">{queryLabel}</span>
+          </p>
+
+          <div className="vt-meta">
+            {typeof attributes.status === "string" && (
+              <div className="vt-meta-item">
+                <span className="vt-meta-label">Status</span>
+                <span className="vt-meta-value">{attributes.status}</span>
+              </div>
+            )}
+            {typeof attributes.http_status === "number" && (
+              <div className="vt-meta-item">
+                <span className="vt-meta-label">HTTP Status</span>
+                <span className="vt-meta-value">{attributes.http_status}</span>
+              </div>
+            )}
+            {typeof attributes.content_type === "string" && (
+              <div className="vt-meta-item">
+                <span className="vt-meta-label">Content type</span>
+                <span className="vt-meta-value">{attributes.content_type}</span>
+              </div>
+            )}
+            {typeof analysisDate === "number" && (
+              <div className="vt-meta-item">
+                <span className="vt-meta-label">Última análise</span>
+                <span className="vt-meta-value">
+                  {new Date(analysisDate * 1000).toLocaleString("pt-BR")}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="vt-tabs">
+        <span className="vt-tab vt-tab-active">Detecção</span>
+        <span className="vt-tab">Detalhes</span>
+        <span className="vt-tab">Comunidade</span>
+      </div>
+
+      <div className="vt-detections">
+        {engines.length === 0 ? (
+          <p className="vt-empty">Nenhum resultado detalhado para exibir.</p>
+        ) : (
+          <table className="vt-table">
+            <thead>
+              <tr>
+                <th>Motor</th>
+                <th>Categoria</th>
+                <th>Resultado</th>
+                <th>Método</th>
+              </tr>
+            </thead>
+            <tbody>
+              {engines.map((engine, index) => (
+                <tr key={`${engine.engine_name ?? "engine"}-${index}`}>
+                  <td>{engine.engine_name ?? "Desconhecido"}</td>
+                  <td>{engine.category ?? "-"}</td>
+                  <td>{engine.result ?? "clean"}</td>
+                  <td>{engine.method ?? "-"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </section>
+  );
+}
 
 export default function HomePage() {
   const [mode, setMode] = useState<Mode>("url");
   const [inputValue, setInputValue] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<VTResponse | null>(null);
+  const [result, setResult] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [lastQuery, setLastQuery] = useState<string>("");
+
+  const modeDescription =
+    mode === "url"
+      ? "URL: envia o endereço informado para o VirusTotal, aguarda a análise e retorna o relatório completo da URL."
+      : mode === "hash"
+      ? "Arquivo (hash): consulta no VirusTotal um arquivo já conhecido a partir do seu hash (MD5, SHA1 ou SHA256)."
+      : mode === "domain"
+      ? "Domínio: busca informações de reputação e histórico de segurança relacionadas a um domínio (exemplo.com)."
+      : mode === "ip"
+      ? "IP: consulta o endereço IP e exibe dados de reputação, atividades suspeitas e associações conhecidas."
+      : "Arquivo (upload): envia o arquivo selecionado para o VirusTotal para ser analisado pelos motores antivírus.";
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -35,12 +199,14 @@ export default function HomePage() {
         const formData = new FormData();
         formData.append("file", file);
 
+        setLastQuery(file.name);
+
         const response = await fetch("/api/vt", {
           method: "POST",
           body: formData
         });
 
-        const data = (await response.json()) as VTResponse | ApiError;
+        const data = (await response.json()) as any | ApiError;
 
         if (!response.ok || "error" in (data as ApiError)) {
           const message =
@@ -61,13 +227,15 @@ export default function HomePage() {
         return;
       }
 
+      setLastQuery(value);
+
       const query = new URLSearchParams({
         type: mode,
         value
       });
 
       const response = await fetch(`/api/vt?${query.toString()}`);
-      const data = (await response.json()) as VTResponse | ApiError;
+      const data = (await response.json()) as any | ApiError;
 
       if (!response.ok || "error" in (data as ApiError)) {
         const message =
@@ -93,7 +261,7 @@ export default function HomePage() {
           <h1>Painel VirusTotal</h1>
           <p>
             Consulte URLs, hashes de arquivos, domínios, IPs e envie arquivos
-            para análise usando a sua API key do VirusTotal.
+            para análise usando a API do VirusTotal.
           </p>
         </header>
 
@@ -134,6 +302,8 @@ export default function HomePage() {
             Arquivo (upload)
           </button>
         </div>
+
+        <p className="note">{modeDescription}</p>
 
         <form className="form" onSubmit={handleSubmit}>
           {mode !== "file" ? (
@@ -178,12 +348,6 @@ export default function HomePage() {
             {loading ? "Consultando..." : "Consultar no VirusTotal"}
           </button>
         </form>
-
-        <p className="note">
-          <strong>Atenção:</strong> este painel usa a sua própria API key do
-          VirusTotal (configurada via variável de ambiente). Respeite os termos
-          de uso da plataforma e a privacidade dos arquivos enviados.
-        </p>
       </section>
 
       {!!error && (
@@ -194,16 +358,7 @@ export default function HomePage() {
       )}
 
       {!!result && (
-        <section className="card card-result">
-          <header className="card-header">
-            <h2>Resposta do VirusTotal</h2>
-          </header>
-          <div className="result-section">
-            <pre className="json">
-              {JSON.stringify(result, null, 2)}
-            </pre>
-          </div>
-        </section>
+        <VTResultCard mode={mode} result={result} queryLabel={lastQuery} />
       )}
 
       <footer className="footer">
@@ -212,3 +367,4 @@ export default function HomePage() {
     </main>
   );
 }
+
