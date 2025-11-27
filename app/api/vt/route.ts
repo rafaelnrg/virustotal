@@ -20,11 +20,7 @@ function jsonError(message: string, status = 400) {
   });
 }
 
-async function vtFetch(
-  path: string,
-  options: RequestInit = {},
-  apiKey?: string
-) {
+async function vtFetch(path: string, options: RequestInit = {}, apiKey?: string) {
   const key = apiKey ?? getApiKey();
 
   const response = await fetch(`${VT_BASE_URL}${path}`, {
@@ -47,10 +43,42 @@ async function vtFetch(
   return data;
 }
 
+function normalizeUrlForId(rawUrl: string): string {
+  const trimmed = rawUrl.trim();
+
+  try {
+    const parsed = new URL(trimmed);
+    // Normaliza apenas o caso comum de barra final na raiz:
+    // https://exemplo.com.br/  -> https://exemplo.com.br
+    if (parsed.pathname === "/" && !parsed.search && !parsed.hash) {
+      parsed.pathname = "";
+    }
+    return parsed.toString();
+  } catch {
+    // Se não for uma URL válida, usa o valor original mesmo.
+    return trimmed;
+  }
+}
+
+function encodeUrlId(rawUrl: string): string {
+  const normalized = normalizeUrlForId(rawUrl);
+  const base64 = Buffer.from(normalized).toString("base64");
+  return base64.replace(/=+$/u, "").replace(/\+/gu, "-").replace(/\//gu, "_");
+}
+
 async function handleUrlLookup(url: string) {
   const apiKey = getApiKey();
 
-  // 1) Envia a URL para análise
+  // 1) Tenta buscar diretamente o objeto de URL (mais rápido para URLs já conhecidas).
+  const urlId = encodeUrlId(url);
+  try {
+    const urlObject = await vtFetch(`/urls/${urlId}`, {}, apiKey);
+    return urlObject;
+  } catch {
+    // Se não existir ainda no VT, seguimos para o fluxo de submissão/analysis.
+  }
+
+  // 2) Envia a URL para análise
   const encodedForm = new URLSearchParams({ url });
   const submission = await vtFetch(
     "/urls",
@@ -69,19 +97,23 @@ async function handleUrlLookup(url: string) {
     throw new Error("Resposta inesperada do VirusTotal ao enviar a URL.");
   }
 
-  // 2) Faz polling até o status ficar "completed" ou estourar o limite
+  // 3) Faz algumas tentativas de polling; se não completar, retorna o último estado mesmo assim.
   let attempts = 0;
-  const maxAttempts = 10;
+  const maxAttempts = 6;
   const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  let lastAnalysis: unknown = submission;
 
   while (attempts < maxAttempts) {
     // eslint-disable-next-line no-await-in-loop
     const analysis = await vtFetch(`/analyses/${analysisId}`, {}, apiKey);
+    lastAnalysis = analysis;
+
     const status = (analysis as { data?: { attributes?: { status?: string } } })
       .data?.attributes?.status;
 
     if (status === "completed") {
-      return analysis;
+      break;
     }
 
     attempts += 1;
@@ -89,9 +121,7 @@ async function handleUrlLookup(url: string) {
     await delay(1500);
   }
 
-  throw new Error(
-    "Tempo limite ao aguardar a conclusão da análise da URL no VirusTotal."
-  );
+  return lastAnalysis;
 }
 
 async function handleHashLookup(hash: string) {
